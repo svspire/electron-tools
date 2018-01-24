@@ -39,8 +39,12 @@ system, architecture.")
                              pathname))
 
 (defun extract (pathname)
-  "Extract an Electron snapshot into its containing directory."
-  (trivial-extract:extract-zip pathname)
+  "Extract an Electron snapshot into a subdirectory."
+  (trivial-extract:extract-zip pathname 
+                               (make-pathname
+                                :host (pathname-host pathname)
+                                :directory (append (pathname-directory pathname)
+                                                   '("electron"))))
   ;; When on Unix, set the executable bit on the file
   #-(or win32 mswindows)
   (let* ((parent (uiop:pathname-directory-pathname pathname))
@@ -60,17 +64,22 @@ system, architecture.")
                      (t (error "Unsupported operating system.")))
                    directory))
 
-(defun get-release (directory &key operating-system version architecture)
+(defun get-release (directory &key operating-system version architecture force)
   "Download an Electron release to the directory."
   (let ((archive (merge-pathnames #p"electron.zip" directory)))
-    ;; Download the release to the directory
-    (download archive :operating-system operating-system
-                      :version version
-                      :architecture architecture)
+    (if (or force
+            (not (probe-file archive)))
+      ;; Download the release to the directory
+        (progn ;(ceramic.log:log-message "Downloading a copy of Electron...")
+          (download archive :operating-system operating-system
+                    :version version
+                    :architecture architecture))
+        ;(ceramic.log:log-message "Already downloaded. Use :force t to force download.")
+        )
     ;; Extract it
     (extract archive)
     ;; Delete it
-    (delete-file archive)
+    ;(delete-file archive)
     t))
 
 (defun app-directory (directory &key operating-system)
