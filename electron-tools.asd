@@ -8,8 +8,6 @@
   :source-control (:git "git@github.com:ceramic/electron-tools.git")
   :depends-on (:trivial-download
                :trivial-extract
-               #-(or win32 mswindows)
-               :osicat
                :trivial-exe
                :uiop)
   :components ((:module "src"
